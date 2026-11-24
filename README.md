@@ -1,4 +1,4 @@
-# 🗳️ Blokichain — Decentralized Voting App
+# Blokichain — Decentralized Voting App
 
 A blockchain voting platform where polls and votes live on an Ethereum smart contract, so results are transparent and can't be tampered with. An AI service checks the results for unusual voting patterns.
 
@@ -11,11 +11,11 @@ A blockchain voting platform where polls and votes live on an Ethereum smart con
 ![Flask](https://img.shields.io/badge/flask-%23000.svg?style=for-the-badge&logo=flask&logoColor=white)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-%23F7931E.svg?style=for-the-badge&logo=scikit-learn&logoColor=white)
 
-> 🚧 **Status: work in progress.** The smart contract, wallet connection and AI analysis service are written; the poll UI, admin panel and API routes are still being built.
+> **Status: work in progress.** The smart contract, wallet connection and AI analysis service are written; the poll UI, admin panel and API routes are still being built.
 
 ---
 
-## ✨ Features
+## Features
 
 - **On-chain polls** — admins create polls with a question, options and a time limit
 - **One wallet, one vote** — the contract blocks double voting per poll
@@ -26,7 +26,7 @@ A blockchain voting platform where polls and votes live on an Ethereum smart con
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌──────────────┐     ┌──────────────────┐     ┌────────────────────┐
@@ -50,7 +50,7 @@ A blockchain voting platform where polls and votes live on an Ethereum smart con
 
 ---
 
-## 📜 Smart Contract
+## Smart Contract
 
 `VotingSystem` (in `Contracts/contracts/Voting.sol`):
 
@@ -64,7 +64,7 @@ A blockchain voting platform where polls and votes live on an Ethereum smart con
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Node.js 18+
@@ -115,11 +115,11 @@ cd client
 npm start
 ```
 
-> ⚠️ Never commit your `.env` file or private keys.
+> Never commit your `.env` file or private keys.
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
 - [x] Voting smart contract with roles and one-vote-per-wallet
 - [x] MetaMask wallet connection
@@ -132,6 +132,6 @@ npm start
 
 ---
 
-## 👤 Author
+## Author
 
 **Felix Kariuki** — [@101feliki](https://github.com/101feliki)
