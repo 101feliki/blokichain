@@ -9,9 +9,9 @@ A blockchain voting platform where polls and votes live on an Ethereum smart con
 ![Express.js](https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB)
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
 ![Flask](https://img.shields.io/badge/flask-%23000.svg?style=for-the-badge&logo=flask&logoColor=white)
-![scikit-learn](https://img.shields.io/badge/scikit--learn-%23F7931E.svg?style=for-the-badge&logo=scikit-learn&logoColor=white)
+![Hardhat](https://img.shields.io/badge/Hardhat-FFF100?style=for-the-badge&logo=hardhat&logoColor=black)
 
-> **Status: work in progress.** The smart contract, wallet connection and AI analysis service are written; the poll UI, admin panel and API routes are still being built.
+> **Status:** working end to end on a local Hardhat chain: smart contract (with tests), API server, AI analysis service and React client.
 
 ---
 
@@ -22,7 +22,7 @@ A blockchain voting platform where polls and votes live on an Ethereum smart con
 - **Role-based access** — only admins can create or end polls (OpenZeppelin `AccessControl`)
 - **MetaMask login** — users connect their wallet to vote
 - **Transparent results** — anyone can read poll results straight from the contract
-- **AI anomaly detection** — an Isolation Forest model flags suspicious vote distributions
+- **Vote analysis** — the AI service flags unusual results (landslides, perfectly even splits, sudden swings, counts going down)
 
 ---
 
@@ -37,7 +37,7 @@ A blockchain voting platform where polls and votes live on an Ethereum smart con
                               ▼
                      ┌──────────────────┐
                      │  AI service      │
-                     │  (Flask + sklearn)│
+                     │  (Flask)          │
                      └──────────────────┘
 ```
 
@@ -70,65 +70,65 @@ A blockchain voting platform where polls and votes live on an Ethereum smart con
 - Node.js 18+
 - Python 3.10+
 - MetaMask browser extension
-- Hardhat (for local blockchain and deployment)
 
-### 1. Clone and install
-```bash
-git clone https://github.com/101feliki/blokichain.git
-cd blokichain
-npm install
-```
-
-### 2. Deploy the contract
+### 1. Contracts: test and deploy to a local chain
 ```bash
 cd Contracts
-npx hardhat node                                   # start a local blockchain
-npx hardhat run scripts/deploy.js --network localhost
+npm install
+npm test                 # runs the contract tests
+npm run node             # terminal 1: local blockchain on http://127.0.0.1:8545
+npm run deploy:local     # terminal 2: deploys and writes Voting.json to client/ and server/
 ```
-Copy the contract address that is printed.
+The deployer account becomes the owner and first admin. To make another wallet an admin, set `EXTRA_ADMIN=0xYourAddress` before deploying.
 
-### 3. Run the server
-Create `server/.env`:
-```env
-INFURA_URL=http://127.0.0.1:8545
-CONTRACT_ADDRESS=<your deployed contract address>
-ADMIN_PRIVATE_KEY=<admin wallet private key>
-PORT=5000
-```
-Then:
-```bash
-cd server
-node server.js
-```
-
-### 4. Run the AI service
+### 2. AI service
 ```bash
 cd ai-service
-pip install flask numpy scikit-learn joblib
-python app.py
+pip install -r requirements.txt
+python app.py            # http://127.0.0.1:5001
 ```
-`POST /analyze` with `{ "results": [12, 8, 3] }` returns totals, percentages and an anomaly score.
+`POST /analyze` with `{ "results": [12, 8, 3] }` returns percentages, the leader, concentration, entropy and any warning flags. Run `pytest` for its tests.
 
-### 5. Run the client
+### 3. API server
+```bash
+cd server
+npm install
+npm start                # http://127.0.0.1:5000
+```
+Optional environment variables: `RPC_URL`, `CONTRACT_ADDRESS`, `AI_SERVICE_URL`, `PORT`. To enable the admin endpoints, set both `ADMIN_PRIVATE_KEY` (wallet the server signs with) and `ADMIN_API_KEY` (sent in the `x-admin-key` header).
+
+| Endpoint | Description |
+|---|---|
+| `GET /api/polls` | All polls, newest first |
+| `GET /api/polls/:id` | One poll |
+| `GET /api/polls/:id/results` | Vote counts per option |
+| `GET /api/polls/:id/analysis` | Results checked by the AI service |
+| `POST /api/admin/polls` | Create a poll (admin key required) |
+| `POST /api/admin/polls/:id/end` | End a poll (admin key required) |
+
+### 4. Client
 ```bash
 cd client
-npm start
+npm install
+npm start                # http://localhost:3000
 ```
+In MetaMask, add the Hardhat network (RPC `http://127.0.0.1:8545`, chain ID `31337`) and import one of the test accounts that `npm run node` prints. Admin wallets see the admin panel automatically.
 
-> Never commit your `.env` file or private keys.
+> Never commit private keys. The Hardhat test accounts are public and only for local use.
 
 ---
 
 ## Roadmap
 
-- [x] Voting smart contract with roles and one-vote-per-wallet
+- [x] Voting smart contract with roles, custom errors and one-vote-per-wallet
+- [x] Contract tests
 - [x] MetaMask wallet connection
-- [x] AI anomaly detection service
-- [ ] Poll list and voting UI
-- [ ] Admin panel for creating and ending polls
-- [ ] API routes and poll controller
-- [ ] Connect the AI service to live poll results
-- [ ] Deploy to a public testnet
+- [x] Poll list, live results and voting UI
+- [x] Admin panel for creating and ending polls
+- [x] API server with read and admin endpoints
+- [x] Vote analysis service with tests
+- [ ] Deploy to a public testnet (Sepolia)
+- [ ] Store result snapshots so the analysis can compare over time
 
 ---
 

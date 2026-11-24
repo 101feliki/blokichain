@@ -1,36 +1,40 @@
-import { useState } from 'react';
+import React, { useEffect, useState } from "react";
 
-const WalletConnector = ({ onConnect }) => {
-  const [error, setError] = useState('');
+const short = (address) => `${address.slice(0, 6)}...${address.slice(-4)}`;
+
+const WalletConnector = ({ account, onConnect }) => {
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!window.ethereum) return;
+    const handler = (accounts) => onConnect(accounts[0] || "");
+    window.ethereum.on("accountsChanged", handler);
+    // Reconnect silently if the site was already authorised.
+    window.ethereum.request({ method: "eth_accounts" }).then(handler).catch(() => {});
+    return () => window.ethereum.removeListener("accountsChanged", handler);
+  }, [onConnect]);
 
   const connectWallet = async () => {
     try {
-      if (!window.ethereum) {
-        throw new Error("Please install MetaMask!");
-      }
-
-      const accounts = await window.ethereum.request({ 
-        method: 'eth_requestAccounts' 
-      });
-      
-      onConnect(accounts[0]);
-      
-      // Listen for account changes
-      window.ethereum.on('accountsChanged', (newAccounts) => {
-        onConnect(newAccounts[0] || '');
-      });
+      if (!window.ethereum) throw new Error("Please install MetaMask!");
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      onConnect(accounts[0] || "");
+      setError("");
     } catch (err) {
       setError(err.message);
     }
   };
 
   return (
-    <div>
-      <button onClick={connectWallet}>
-        Connect Wallet
-      </button>
+    <div className="wallet">
+      {account ? (
+        <span className="badge">Connected: {short(account)}</span>
+      ) : (
+        <button onClick={connectWallet}>Connect Wallet</button>
+      )}
       {error && <p className="error">{error}</p>}
-      {account && <p>Connected: {account}</p>}
     </div>
   );
 };
+
+export default WalletConnector;

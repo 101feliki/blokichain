@@ -1,42 +1,33 @@
-from flask import Flask, request, jsonify
-import numpy as np
-from sklearn.ensemble import IsolationForest
-import joblib
-from datetime import datetime
+from datetime import datetime, timezone
+import os
+
+from flask import Flask, jsonify, request
+
+from analysis.vote_analyzer import analyze
 
 app = Flask(__name__)
 
-# Load or create model
-try:
-    model = joblib.load('models/vote_model.pkl')
-except:
-    model = IsolationForest(contamination=0.1)
-    joblib.dump(model, 'models/vote_model.pkl')
 
-@app.route('/analyze', methods=['POST'])
-def analyze():
-    data = request.json
-    
-    # Convert votes to features
-    votes = np.array(data['results']).reshape(1, -1)
-    
-    # Anomaly detection
-    anomaly_score = model.decision_function(votes)[0]
-    is_anomaly = model.predict(votes)[0] == -1
-    
-    # Basic statistics
-    total = sum(data['results'])
-    percentages = [round(v/total*100, 2) for v in data['results']]
-    
-    return jsonify({
-        "analysis": {
-            "total_votes": total,
-            "percentages": percentages,
-            "anomaly_score": float(anomaly_score),
-            "is_anomaly": bool(is_anomaly),
-            "timestamp": datetime.utcnow().isoformat()
+@app.get("/health")
+def health():
+    return jsonify(status="ok")
+
+
+@app.post("/analyze")
+def analyze_route():
+    data = request.get_json(silent=True) or {}
+    try:
+        result = analyze(data.get("results") or [], previous=data.get("previous"))
+    except ValueError as err:
+        return jsonify(error=str(err)), 400
+
+    return jsonify(
+        analysis={
+            **result.to_dict(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
-    })
+    )
 
-if __name__ == '__main__':
-    app.run(port=5001)
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5001)))
